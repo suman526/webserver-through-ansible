@@ -1,0 +1,35 @@
+- hosts: all
+  vars_prompt: 
+    - name: "doc_root"
+      prompt: "Enter the document root"
+      private: no
+  tasks: 
+    - name: "!!!Installing httpd package!!!"
+      package: 
+       name: "httpd"
+       state: present
+      register: x
+    - name: "!!!Copying html code to document root!!!"
+      copy:
+         dest: "{{ doc_root}}/"
+         src: "/root/ansible_ws/web.html"
+      register: httpd
+      notify:
+         - "start services"
+    - name: "!!! Enable firewall services !!!"
+      firewalld:
+         port: 80/tcp
+         immediate: yes
+         state: enabled
+         permanent: true
+    - name: "!!! Starting httpd services !!!"
+      service: 
+        name: "httpd"
+        state: started
+        enabled: yes
+  handlers:
+    - name: "start services"
+      service:
+        name: "httpd"
+        state: restarted  
+      when: httpd.changed == true
